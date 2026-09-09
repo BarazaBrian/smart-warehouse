@@ -15,6 +15,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 
+import org.example.controller.ProductController;
+
+
+
 public class ProductPanel extends JPanel {
 
     private final JTextField nameField = new JTextField();
@@ -23,6 +27,7 @@ public class ProductPanel extends JPanel {
     private final JTextField minimumStockField = new JTextField();
     private final JTextField expiryField = new JTextField();
     private final ProductService productService;
+    private final ProductController controller;
 
     private final DefaultTableModel tableModel = new DefaultTableModel(
             new String[]{
@@ -38,6 +43,11 @@ public class ProductPanel extends JPanel {
     };
 
     private final JTable productTable = new JTable(tableModel);
+    private final JButton addButton = new JButton("Add");
+    private final JButton updateButton = new JButton("Update");
+    private final JButton deleteButton = new JButton("Delete");
+    private final JButton refreshButton = new JButton("Refresh");
+    private final JButton clearButton = new JButton("Clear");
 
     public ProductPanel() {
         this(null);
@@ -45,6 +55,7 @@ public class ProductPanel extends JPanel {
 
     public ProductPanel(ProductService productService) {
         this.productService = productService;
+        this.controller = new ProductController(this, productService);
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -73,16 +84,39 @@ public class ProductPanel extends JPanel {
         );
         productTable.setFillsViewportHeight(true);
 
+        productTable.getSelectionModel().addListSelectionListener(event -> {
+
+            if (event.getValueIsAdjusting()) {
+                return;
+            }
+
+            int selectedRow = productTable.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            int modelRow = productTable.convertRowIndexToModel(selectedRow);
+
+            nameField.setText(tableModel.getValueAt(modelRow, 1).toString());
+            skuField.setText(tableModel.getValueAt(modelRow, 2).toString());
+            priceField.setText(tableModel.getValueAt(modelRow, 3).toString());
+            minimumStockField.setText(
+                    tableModel.getValueAt(modelRow, 4).toString()
+            );
+
+            Object expiryDate = tableModel.getValueAt(modelRow, 5);
+
+            expiryField.setText(
+                    expiryDate == null ? "" : expiryDate.toString()
+            );
+        });
+
         JScrollPane tableScrollPane = new JScrollPane(productTable);
         add(tableScrollPane, BorderLayout.CENTER);
 
         JPanel buttons = new JPanel();
 
-        JButton addButton = new JButton("Add");
-        JButton updateButton = new JButton("Update");
-        JButton deleteButton = new JButton("Delete");
-        JButton refreshButton = new JButton("Refresh");
-        JButton clearButton = new JButton("Clear");
 
         buttons.add(addButton);
         buttons.add(updateButton);
@@ -103,18 +137,106 @@ public class ProductPanel extends JPanel {
             nameField.requestFocusInWindow();
         });
 
-// TODO (Brian): Enable these buttons when their handlers are connected.
-        addButton.setEnabled(false);
+// TODO (Brian): Implement Update and Delete button handlers.        addButton.setEnabled(productService != null);
+        addButton.addActionListener(event -> addProduct());
         updateButton.setEnabled(false);
         deleteButton.setEnabled(false);
         refreshButton.setEnabled(productService != null);
 
         refreshButton.addActionListener(event -> loadProducts(refreshButton));
 
-// TODO (Brian): Connect button handlers, load products and handle selection.
+// TODO (Brian): Implement Update and Delete button handlers.
         // TODO (Integration with Elera):
         // Connect ProductService after database setup is available.
     }
+
+    private void addProduct() {
+
+        if (productService == null || !refreshButton.isEnabled()) {
+            return;
+        }
+
+        Product product;
+
+        try {
+            product = readProductForm();
+        } catch (IllegalArgumentException exception) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    exception.getMessage(),
+                    "Invalid input",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        addButton.setEnabled(false);
+        refreshButton.setEnabled(false);
+
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws SQLException {
+                productService.addProduct(product);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                boolean saved = false;
+
+                try {
+                    get();
+                    saved = true;
+
+                    JOptionPane.showMessageDialog(
+                            ProductPanel.this,
+                            "Product added successfully."
+                    );
+
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+
+                    JOptionPane.showMessageDialog(
+                            ProductPanel.this,
+                            "Saving was interrupted. Refresh to check "
+                                    + "whether the product was saved.",
+                            "Save interrupted",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+
+                    String message = "Could not save the product. "
+                            + "Check the database connection and ensure "
+                            + "the SKU is unique.";
+
+                    if (cause instanceof IllegalArgumentException) {
+                        message = cause.getMessage();
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            ProductPanel.this,
+                            message,
+                            "Could not add product",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+
+                } finally {
+                    addButton.setEnabled(true);
+                    refreshButton.setEnabled(true);
+                }
+
+                if (saved) {
+                    loadProducts(refreshButton);
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
     private Product readProductForm() {
 
         String name = nameField.getText().trim();
@@ -154,66 +276,26 @@ public class ProductPanel extends JPanel {
 
         return new Product(name, sku, price, minimumStock, expiryDate);
     }
-
     private void loadProducts(JButton refreshButton) {
+        controller.refreshProducts();
+    }
 
-        if (productService == null) {
-            return;
+    public void setRefreshEnabled(boolean enabled) {
+        refreshButton.setEnabled(enabled);
+    }
+
+    public void displayProducts(List<Product> products) {
+        tableModel.setRowCount(0);
+
+        for (Product product : products) {
+            tableModel.addRow(new Object[]{
+                    product.getId(),
+                    product.getName(),
+                    product.getSku(),
+                    product.getUnitPrice(),
+                    product.getMinimumStockLevel(),
+                    product.getExpiryDate()
+            });
         }
-
-        refreshButton.setEnabled(false);
-
-        SwingWorker<List<Product>, Void> worker =
-                new SwingWorker<List<Product>, Void>() {
-
-                    @Override
-                    protected List<Product> doInBackground() throws SQLException {
-                        return productService.getAllProducts();
-                    }
-
-                    @Override
-                    protected void done() {
-                        try {
-                            List<Product> products = get();
-
-                            tableModel.setRowCount(0);
-
-                            for (Product product : products) {
-                                tableModel.addRow(new Object[]{
-                                        product.getId(),
-                                        product.getName(),
-                                        product.getSku(),
-                                        product.getUnitPrice(),
-                                        product.getMinimumStockLevel(),
-                                        product.getExpiryDate()
-                                });
-                            }
-
-                        } catch (InterruptedException exception) {
-                            Thread.currentThread().interrupt();
-
-                            JOptionPane.showMessageDialog(
-                                    ProductPanel.this,
-                                    "Loading was interrupted. Please try again.",
-                                    "Loading interrupted",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
-
-                        } catch (ExecutionException exception) {
-                            JOptionPane.showMessageDialog(
-                                    ProductPanel.this,
-                                    "Could not load products. Check the database "
-                                            + "connection and table setup, then try again.",
-                                    "Database error",
-                                    JOptionPane.ERROR_MESSAGE
-                            );
-
-                        } finally {
-                            refreshButton.setEnabled(true);
-                        }
-                    }
-                };
-
-        worker.execute();
     }
 }

@@ -1,11 +1,11 @@
 package org.example.ui;
 
-import java.sql.SQLException;
+
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 import org.example.service.ProductService;
 import org.example.model.Product;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -16,7 +16,6 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 
 import org.example.controller.ProductController;
-
 
 
 public class ProductPanel extends JPanel {
@@ -137,107 +136,29 @@ public class ProductPanel extends JPanel {
             nameField.requestFocusInWindow();
         });
 
-// TODO (Brian): Implement Update and Delete button handlers.        addButton.setEnabled(productService != null);
-        addButton.addActionListener(event -> addProduct());
-        updateButton.setEnabled(false);
-        deleteButton.setEnabled(false);
-        refreshButton.setEnabled(productService != null);
-
-        refreshButton.addActionListener(event -> loadProducts(refreshButton));
+        addButton.setEnabled(productService != null);
+        addButton.addActionListener(event -> controller.addProduct());
 
 // TODO (Brian): Implement Update and Delete button handlers.
+        updateButton.setEnabled(false);
+        deleteButton.setEnabled(false);
+
+        refreshButton.setEnabled(productService != null);
+        refreshButton.addActionListener(event -> loadProducts(refreshButton));
         // TODO (Integration with Elera):
         // Connect ProductService after database setup is available.
     }
 
-    private void addProduct() {
-
-        if (productService == null || !refreshButton.isEnabled()) {
-            return;
-        }
-
-        Product product;
-
-        try {
-            product = readProductForm();
-        } catch (IllegalArgumentException exception) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    exception.getMessage(),
-                    "Invalid input",
-                    JOptionPane.ERROR_MESSAGE
-            );
-            return;
-        }
-
-        addButton.setEnabled(false);
-        refreshButton.setEnabled(false);
-
-        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
-
-            @Override
-            protected Void doInBackground() throws SQLException {
-                productService.addProduct(product);
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                boolean saved = false;
-
-                try {
-                    get();
-                    saved = true;
-
-                    JOptionPane.showMessageDialog(
-                            ProductPanel.this,
-                            "Product added successfully."
-                    );
-
-                } catch (InterruptedException exception) {
-                    Thread.currentThread().interrupt();
-
-                    JOptionPane.showMessageDialog(
-                            ProductPanel.this,
-                            "Saving was interrupted. Refresh to check "
-                                    + "whether the product was saved.",
-                            "Save interrupted",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-
-                } catch (ExecutionException exception) {
-                    Throwable cause = exception.getCause();
-
-                    String message = "Could not save the product. "
-                            + "Check the database connection and ensure "
-                            + "the SKU is unique.";
-
-                    if (cause instanceof IllegalArgumentException) {
-                        message = cause.getMessage();
-                    }
-
-                    JOptionPane.showMessageDialog(
-                            ProductPanel.this,
-                            message,
-                            "Could not add product",
-                            JOptionPane.ERROR_MESSAGE
-                    );
-
-                } finally {
-                    addButton.setEnabled(true);
-                    refreshButton.setEnabled(true);
-                }
-
-                if (saved) {
-                    loadProducts(refreshButton);
-                }
-            }
-        };
-
-        worker.execute();
+    public boolean isRefreshEnabled() {
+        return refreshButton.isEnabled();
     }
 
-    private Product readProductForm() {
+    public void setSaving(boolean saving) {
+        addButton.setEnabled(!saving && productService != null);
+        refreshButton.setEnabled(!saving && productService != null);
+    }
+
+    public Product readProductForm() {
 
         String name = nameField.getText().trim();
         String sku = skuField.getText().trim();
@@ -276,6 +197,7 @@ public class ProductPanel extends JPanel {
 
         return new Product(name, sku, price, minimumStock, expiryDate);
     }
+
     private void loadProducts(JButton refreshButton) {
         controller.refreshProducts();
     }

@@ -60,6 +60,78 @@ public class ProductController {
         worker.execute();
     }
 
+    public void addProduct() {
+
+        if (productService == null || !panel.isRefreshEnabled()) {
+            return;
+        }
+
+        Product product;
+
+        try {
+            product = panel.readProductForm();
+        } catch (IllegalArgumentException exception) {
+            showError(exception.getMessage());
+            return;
+        }
+
+        panel.setSaving(true);
+
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws SQLException {
+                productService.addProduct(product);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                boolean saved = false;
+
+                try {
+                    get();
+                    saved = true;
+
+                    JOptionPane.showMessageDialog(
+                            panel,
+                            "Product added successfully."
+                    );
+
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+
+                    showError(
+                            "Saving was interrupted. Refresh to check "
+                                    + "whether the product was saved."
+                    );
+
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+
+                    if (cause instanceof IllegalArgumentException) {
+                        showError(cause.getMessage());
+                    } else {
+                        showError(
+                                "Could not save the product. Check the "
+                                        + "database connection and ensure "
+                                        + "the SKU is unique."
+                        );
+                    }
+
+                } finally {
+                    panel.setSaving(false);
+                }
+
+                if (saved) {
+                    refreshProducts();
+                }
+            }
+        };
+
+        worker.execute();
+    }
+
     private void showError(String message) {
         JOptionPane.showMessageDialog(
                 panel,

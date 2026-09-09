@@ -139,9 +139,12 @@ public class ProductPanel extends JPanel {
         addButton.setEnabled(productService != null);
         addButton.addActionListener(event -> controller.addProduct());
 
-// TODO (Brian): Implement Update and Delete button handlers.
-        updateButton.setEnabled(false);
-        deleteButton.setEnabled(false);
+// TODO (Brian and Elera): Verify all CRUD actions against MySQL,
+// including rejection of deleting products with linked records.
+        updateButton.setEnabled(productService != null);
+        updateButton.addActionListener(event -> controller.updateProduct());
+        deleteButton.setEnabled(productService != null);
+        deleteButton.addActionListener(event -> controller.deleteProduct());
 
         refreshButton.setEnabled(productService != null);
         refreshButton.addActionListener(event -> loadProducts(refreshButton));
@@ -154,8 +157,50 @@ public class ProductPanel extends JPanel {
     }
 
     public void setSaving(boolean saving) {
-        addButton.setEnabled(!saving && productService != null);
-        refreshButton.setEnabled(!saving && productService != null);
+        boolean enabled = !saving && productService != null;
+
+        addButton.setEnabled(enabled);
+        updateButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
+        refreshButton.setEnabled(enabled);
+    }
+
+    public int getSelectedProductId() {
+
+        int selectedRow = productTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            throw new IllegalArgumentException(
+                    "Select a product from the table first.");
+        }
+
+        int modelRow = productTable.convertRowIndexToModel(selectedRow);
+
+        return ((Number) tableModel.getValueAt(modelRow, 0)).intValue();
+    }
+
+    public Product readSelectedProduct() {
+
+        int selectedRow = productTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            throw new IllegalArgumentException(
+                    "Select a product from the table first.");
+        }
+
+        int modelRow = productTable.convertRowIndexToModel(selectedRow);
+        int id = ((Number) tableModel.getValueAt(modelRow, 0)).intValue();
+
+        Product editedProduct = readProductForm();
+
+        return new Product(
+                id,
+                editedProduct.getName(),
+                editedProduct.getSku(),
+                editedProduct.getUnitPrice(),
+                editedProduct.getMinimumStockLevel(),
+                editedProduct.getExpiryDate()
+        );
     }
 
     public Product readProductForm() {
@@ -203,7 +248,12 @@ public class ProductPanel extends JPanel {
     }
 
     public void setRefreshEnabled(boolean enabled) {
-        refreshButton.setEnabled(enabled);
+        boolean available = enabled && productService != null;
+
+        refreshButton.setEnabled(available);
+        addButton.setEnabled(available);
+        updateButton.setEnabled(available);
+        deleteButton.setEnabled(available);
     }
 
     public void displayProducts(List<Product> products) {

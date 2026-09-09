@@ -124,4 +124,21 @@ public class ProductDAO {
             return statement.executeUpdate() > 0;
         }
     }
+
+    public boolean deleteProduct(int id) throws SQLException {
+
+        // TODO (Elera): Use foreign keys with ON DELETE RESTRICT
+        // from inventory and stock movements to products.
+        // Products with linked records must not be deleted.
+
+        String sql = "DELETE FROM products WHERE id = ?";
+
+        try (PreparedStatement statement =
+                     connection.prepareStatement(sql)) {
+
+            statement.setInt(1, id);
+
+            return statement.executeUpdate() > 0;
+        }
+    }
 }

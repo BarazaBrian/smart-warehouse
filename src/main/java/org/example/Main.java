@@ -1,5 +1,8 @@
 package org.example;
 
+import org.example.ui.ProductPanel;
+import java.awt.BorderLayout;
+
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
@@ -20,7 +23,8 @@ public class Main {
                 SwingConstants.CENTER
         );
 
-        window.add(heading);
+        window.add(heading, BorderLayout.NORTH);
+        window.add(new ProductPanel(), BorderLayout.CENTER);
         window.setSize(1000, 650);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLocationRelativeTo(null);

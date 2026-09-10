@@ -7,6 +7,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.example.model.MovementType;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+
 public class StockMovementDAO {
 
     private final Connection connection;
@@ -51,5 +56,39 @@ public class StockMovementDAO {
 
             statement.executeUpdate();
         }
+    }
+    public List<StockMovement> getAllMovements() throws SQLException {
+
+        List<StockMovement> movements = new ArrayList<>();
+
+        String sql = """
+            SELECT id, product_id, location_id, movement_type,
+                   quantity, movement_date
+            FROM stock_movements
+            ORDER BY movement_date DESC, id DESC
+            """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+
+            while (results.next()) {
+
+                StockMovement movement = new StockMovement(
+                        results.getInt("id"),
+                        results.getInt("product_id"),
+                        results.getInt("location_id"),
+                        MovementType.valueOf(
+                                results.getString("movement_type")
+                        ),
+                        results.getInt("quantity"),
+                        results.getTimestamp("movement_date")
+                                .toLocalDateTime()
+                );
+
+                movements.add(movement);
+            }
+        }
+
+        return movements;
     }
 }

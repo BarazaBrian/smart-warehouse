@@ -1,5 +1,8 @@
 package org.example.service;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+
 import org.example.dao.ProductDAO;
 import org.example.model.Product;
 
@@ -36,6 +39,20 @@ public class ProductService {
         validateId(id);
 
         return productDAO.deleteProduct(id);
+    }
+
+    public List<Product> getNearExpiryProducts(LocalDate today)
+            throws SQLException {
+
+        List<Product> nearExpiryProducts = new ArrayList<>();
+
+        for (Product product : productDAO.getAllProducts()) {
+            if (product.isNearExpiry(today)) {
+                nearExpiryProducts.add(product);
+            }
+        }
+
+        return nearExpiryProducts;
     }
 
     private void validateId(int id) {

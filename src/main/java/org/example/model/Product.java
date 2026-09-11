@@ -52,4 +52,14 @@ public class Product {
     public LocalDate getExpiryDate() {
         return expiryDate;
     }
+
+    public boolean isNearExpiry(LocalDate today) {
+
+        if (expiryDate == null) {
+            return false;
+        }
+
+        return !expiryDate.isBefore(today)
+                && !expiryDate.isAfter(today.plusDays(30));
+    }
 }

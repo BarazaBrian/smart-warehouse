@@ -1,5 +1,7 @@
 package org.example.service;
 
+import java.time.LocalDate;
+
 import org.example.model.Product;
 import org.junit.jupiter.api.Test;
 
@@ -99,5 +101,55 @@ public class ProductValidatorTest {
 
         assertThrows(IllegalArgumentException.class,
                 () -> validator.validate(product));
+    }
+
+    @Test
+    void includesProductExpiringToday() {
+        LocalDate today = LocalDate.of(2026, 9, 11);
+
+        Product product = new Product(
+                "Milk", "M001", BigDecimal.ONE, 5, today);
+
+        assertTrue(product.isNearExpiry(today));
+    }
+
+    @Test
+    void includesProductExpiringInThirtyDays() {
+        LocalDate today = LocalDate.of(2026, 9, 11);
+
+        Product product = new Product(
+                "Milk", "M001", BigDecimal.ONE, 5, today.plusDays(30));
+
+        assertTrue(product.isNearExpiry(today));
+    }
+
+    @Test
+    void excludesProductExpiringInThirtyOneDays() {
+        LocalDate today = LocalDate.of(2026, 9, 11);
+
+        Product product = new Product(
+                "Milk", "M001", BigDecimal.ONE, 5, today.plusDays(31));
+
+        assertFalse(product.isNearExpiry(today));
+    }
+
+    @Test
+    void excludesAlreadyExpiredProductFromNearExpiry() {
+        LocalDate today = LocalDate.of(2026, 9, 11);
+
+        Product product = new Product(
+                "Milk", "M001", BigDecimal.ONE, 5, today.minusDays(1));
+
+        assertFalse(product.isNearExpiry(today));
+    }
+
+    @Test
+    void excludesProductWithoutExpiryDate() {
+        LocalDate today = LocalDate.of(2026, 9, 11);
+
+        Product product = new Product(
+                "Desk", "D001", BigDecimal.ONE, 5, null);
+
+        assertFalse(product.isNearExpiry(today));
     }
 }

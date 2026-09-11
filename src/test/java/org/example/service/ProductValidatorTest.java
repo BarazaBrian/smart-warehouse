@@ -201,4 +201,64 @@ public class ProductValidatorTest {
         assertThrows(IllegalArgumentException.class,
                 () -> product.isLowStock(-1));
     }
+
+    @Test
+    void acceptsMaximumNameAndSkuLengths() {
+        Product product = createProduct(
+                "A".repeat(100), "S".repeat(50), BigDecimal.ONE, 5);
+
+        assertDoesNotThrow(() -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsNameOverOneHundredCharacters() {
+        Product product = createProduct(
+                "A".repeat(101), "W001", BigDecimal.ONE, 5);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsSkuOverFiftyCharacters() {
+        Product product = createProduct(
+                "Water", "S".repeat(51), BigDecimal.ONE, 5);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
+
+    @Test
+    void acceptsMaximumPrice() {
+        Product product = createProduct(
+                "Water", "W001", new BigDecimal("9999999999.99"), 5);
+
+        assertDoesNotThrow(() -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsPriceAboveMaximum() {
+        Product product = createProduct(
+                "Water", "W001", new BigDecimal("10000000000.00"), 5);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsPriceRequiringThreeDecimalPlaces() {
+        Product product = createProduct(
+                "Water", "W001", new BigDecimal("25.001"), 5);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
+
+    @Test
+    void acceptsExtraTrailingZerosInPrice() {
+        Product product = createProduct(
+                "Water", "W001", new BigDecimal("25.000"), 5);
+
+        assertDoesNotThrow(() -> validator.validate(product));
+    }
 }

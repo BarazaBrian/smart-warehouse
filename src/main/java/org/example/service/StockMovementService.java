@@ -1,5 +1,7 @@
 package org.example.service;
 
+import java.util.List;
+
 import org.example.dao.InventoryItemDAO;
 import org.example.dao.StockMovementDAO;
 import org.example.model.InventoryItem;
@@ -22,6 +24,17 @@ public class StockMovementService {
     // TODO (Elera): Supply a configured MySQL DataSource.
     public StockMovementService(DataSource dataSource) {
         this.dataSource = dataSource;
+    }
+
+    public List<StockMovement> getAllMovements() throws SQLException {
+
+        try (Connection connection = dataSource.getConnection()) {
+
+            StockMovementDAO movementDAO =
+                    new StockMovementDAO(connection);
+
+            return movementDAO.getAllMovements();
+        }
     }
 
     public void recordMovement(StockMovement movement)

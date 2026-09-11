@@ -113,10 +113,101 @@ public class InventoryPanel extends JPanel {
         );
         refreshButton.setEnabled(inventoryService != null);
         refreshButton.addActionListener(event -> refreshInventory(refreshButton));
-        historyButton.setEnabled(false);
+        historyButton.setEnabled(stockMovementService != null);
+        historyButton.addActionListener(event -> viewHistory(historyButton));
 
         // TODO (Integration with Elera):
         // Connect InventoryService and display product/location names.
+    }
+
+    private void viewHistory(JButton historyButton) {
+
+        if (stockMovementService == null) {
+            return;
+        }
+
+        historyButton.setEnabled(false);
+
+        SwingWorker<List<StockMovement>, Void> worker =
+                new SwingWorker<List<StockMovement>, Void>() {
+
+                    @Override
+                    protected List<StockMovement> doInBackground()
+                            throws SQLException {
+                        return stockMovementService.getAllMovements();
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            displayHistory(get());
+
+                        } catch (InterruptedException exception) {
+                            Thread.currentThread().interrupt();
+
+                            JOptionPane.showMessageDialog(
+                                    InventoryPanel.this,
+                                    "Loading history was interrupted.",
+                                    "Loading interrupted",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                        } catch (ExecutionException exception) {
+                            JOptionPane.showMessageDialog(
+                                    InventoryPanel.this,
+                                    "Could not load history. Check the database "
+                                            + "connection and table setup.",
+                                    "History error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                        } finally {
+                            historyButton.setEnabled(true);
+                        }
+                    }
+                };
+
+        worker.execute();
+    }
+
+    private void displayHistory(List<StockMovement> movements) {
+
+        DefaultTableModel historyModel = new DefaultTableModel(
+                new String[]{
+                        "ID", "Product ID", "Location ID",
+                        "Type", "Quantity", "Date and time"
+                },
+                0
+        ) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        for (StockMovement movement : movements) {
+            historyModel.addRow(new Object[]{
+                    movement.getId(),
+                    movement.getProductId(),
+                    movement.getLocationId(),
+                    movement.getMovementType(),
+                    movement.getQuantity(),
+                    movement.getDate()
+            });
+        }
+
+        JTable historyTable = new JTable(historyModel);
+        historyTable.setFillsViewportHeight(true);
+
+        JScrollPane scrollPane = new JScrollPane(historyTable);
+        scrollPane.setPreferredSize(new java.awt.Dimension(800, 350));
+
+        JOptionPane.showMessageDialog(
+                this,
+                scrollPane,
+                "Stock Movement History",
+                JOptionPane.PLAIN_MESSAGE
+        );
     }
 
     private void refreshInventory(JButton refreshButton) {

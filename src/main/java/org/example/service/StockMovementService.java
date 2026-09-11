@@ -7,31 +7,39 @@ import org.example.model.StockMovement;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import javax.sql.DataSource;
+
 
 public class StockMovementService {
 
-    private final Connection connection;
-    private final InventoryItemDAO inventoryDAO;
-    private final StockMovementDAO movementDAO;
+    private final DataSource dataSource;
 
     private final StockMovementValidator validator =
             new StockMovementValidator();
 
     private final StockCalculator calculator = new StockCalculator();
 
-    // TODO (Integration with Elera):
-    // Supply an open connection dedicated to this operation.
-    // The caller must close it after the operation finishes.
-    public StockMovementService(Connection connection) {
-        this.connection = connection;
-        this.inventoryDAO = new InventoryItemDAO(connection);
-        this.movementDAO = new StockMovementDAO(connection);
+    // TODO (Elera): Supply a configured MySQL DataSource.
+    public StockMovementService(DataSource dataSource) {
+        this.dataSource = dataSource;
     }
 
     public void recordMovement(StockMovement movement)
             throws SQLException {
 
         validator.validate(movement);
+
+        try (Connection connection = dataSource.getConnection()) {
+            recordMovement(connection, movement);
+        }
+    }
+
+    private void recordMovement(Connection connection,
+                                StockMovement movement)
+            throws SQLException {
+
+        InventoryItemDAO inventoryDAO = new InventoryItemDAO(connection);
+        StockMovementDAO movementDAO = new StockMovementDAO(connection);
 
         if (!connection.getAutoCommit()) {
             throw new SQLException(

@@ -1,4 +1,7 @@
 package org.example.ui;
+import org.example.service.StockMovementService;
+import java.sql.SQLException;
+import java.util.concurrent.ExecutionException;
 
 import org.example.model.InventoryItem;
 
@@ -13,7 +16,10 @@ import org.example.model.StockMovement;
 import org.example.service.StockMovementValidator;
 import java.time.LocalDateTime;
 
+
 public class InventoryPanel extends JPanel {
+
+    private final StockMovementService stockMovementService;
 
     private final JTextField productIdField = new JTextField();
     private final JTextField locationIdField = new JTextField();
@@ -35,6 +41,11 @@ public class InventoryPanel extends JPanel {
     private final JTable inventoryTable = new JTable(tableModel);
 
     public InventoryPanel() {
+        this(null);
+    }
+
+    public InventoryPanel(StockMovementService stockMovementService) {
+        this.stockMovementService = stockMovementService;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -90,12 +101,92 @@ public class InventoryPanel extends JPanel {
 
 // TODO (Brian): Connect these buttons to inventory and movement services.
         assignButton.setEnabled(false);
-        recordButton.setEnabled(false);
+        recordButton.setEnabled(stockMovementService != null);
+        recordButton.addActionListener(event -> recordMovement(recordButton));
         refreshButton.setEnabled(false);
         historyButton.setEnabled(false);
 
         // TODO (Integration with Elera):
         // Connect InventoryService and display product/location names.
+    }
+
+    private void recordMovement(JButton recordButton) {
+
+        if (stockMovementService == null) {
+            return;
+        }
+
+        StockMovement movement;
+
+        try {
+            movement = readMovementForm();
+        } catch (IllegalArgumentException exception) {
+            JOptionPane.showMessageDialog(
+                    this,
+                    exception.getMessage(),
+                    "Invalid input",
+                    JOptionPane.ERROR_MESSAGE
+            );
+            return;
+        }
+
+        recordButton.setEnabled(false);
+
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+            @Override
+            protected Void doInBackground() throws SQLException {
+                stockMovementService.recordMovement(movement);
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get();
+
+                    JOptionPane.showMessageDialog(
+                            InventoryPanel.this,
+                            "Stock movement recorded successfully."
+                    );
+
+                    // TODO (Brian): Reload inventory after a successful save.
+
+                } catch (InterruptedException exception) {
+                    Thread.currentThread().interrupt();
+
+                    JOptionPane.showMessageDialog(
+                            InventoryPanel.this,
+                            "Recording was interrupted. Check movement "
+                                    + "history before trying again.",
+                            "Recording interrupted",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+
+                } catch (ExecutionException exception) {
+                    Throwable cause = exception.getCause();
+
+                    String message = "Could not record the movement. "
+                            + "Check the database connection and setup.";
+
+                    if (cause instanceof IllegalArgumentException) {
+                        message = cause.getMessage();
+                    }
+
+                    JOptionPane.showMessageDialog(
+                            InventoryPanel.this,
+                            message,
+                            "Movement error",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+
+                } finally {
+                    recordButton.setEnabled(true);
+                }
+            }
+        };
+
+        worker.execute();
     }
 
     private StockMovement readMovementForm() {

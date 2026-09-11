@@ -1,4 +1,6 @@
 package org.example.ui;
+
+import org.example.service.InventoryService;
 import org.example.service.StockMovementService;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +23,8 @@ public class InventoryPanel extends JPanel {
 
     private final StockMovementService stockMovementService;
 
+    private final InventoryService inventoryService;
+
     private final JTextField productIdField = new JTextField();
     private final JTextField locationIdField = new JTextField();
     private final JTextField quantityField = new JTextField();
@@ -41,11 +45,13 @@ public class InventoryPanel extends JPanel {
     private final JTable inventoryTable = new JTable(tableModel);
 
     public InventoryPanel() {
-        this(null);
+        this(null, null);
     }
 
-    public InventoryPanel(StockMovementService stockMovementService) {
+    public InventoryPanel(StockMovementService stockMovementService,
+                          InventoryService inventoryService) {
         this.stockMovementService = stockMovementService;
+        this.inventoryService = inventoryService;
 
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -102,15 +108,69 @@ public class InventoryPanel extends JPanel {
 // TODO (Brian): Connect these buttons to inventory and movement services.
         assignButton.setEnabled(false);
         recordButton.setEnabled(stockMovementService != null);
-        recordButton.addActionListener(event -> recordMovement(recordButton));
-        refreshButton.setEnabled(false);
+        recordButton.addActionListener(
+                event -> recordMovement(recordButton, refreshButton)
+        );
+        refreshButton.setEnabled(inventoryService != null);
+        refreshButton.addActionListener(event -> refreshInventory(refreshButton));
         historyButton.setEnabled(false);
 
         // TODO (Integration with Elera):
         // Connect InventoryService and display product/location names.
     }
 
-    private void recordMovement(JButton recordButton) {
+    private void refreshInventory(JButton refreshButton) {
+
+        if (inventoryService == null) {
+            return;
+        }
+
+        refreshButton.setEnabled(false);
+
+        SwingWorker<List<InventoryItem>, Void> worker =
+                new SwingWorker<List<InventoryItem>, Void>() {
+
+                    @Override
+                    protected List<InventoryItem> doInBackground()
+                            throws SQLException {
+                        return inventoryService.getAllItems();
+                    }
+
+                    @Override
+                    protected void done() {
+                        try {
+                            displayItems(get());
+
+                        } catch (InterruptedException exception) {
+                            Thread.currentThread().interrupt();
+
+                            JOptionPane.showMessageDialog(
+                                    InventoryPanel.this,
+                                    "Loading was interrupted. Please try again.",
+                                    "Loading interrupted",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                        } catch (ExecutionException exception) {
+                            JOptionPane.showMessageDialog(
+                                    InventoryPanel.this,
+                                    "Could not load inventory. Check the database "
+                                            + "connection and table setup.",
+                                    "Inventory error",
+                                    JOptionPane.ERROR_MESSAGE
+                            );
+
+                        } finally {
+                            refreshButton.setEnabled(true);
+                        }
+                    }
+                };
+
+        worker.execute();
+    }
+
+    private void recordMovement(JButton recordButton,
+                                JButton refreshButton) {
 
         if (stockMovementService == null) {
             return;
@@ -150,7 +210,7 @@ public class InventoryPanel extends JPanel {
                             "Stock movement recorded successfully."
                     );
 
-                    // TODO (Brian): Reload inventory after a successful save.
+                    refreshInventory(refreshButton);
 
                 } catch (InterruptedException exception) {
                     Thread.currentThread().interrupt();

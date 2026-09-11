@@ -9,6 +9,10 @@ import java.util.List;
 import org.example.model.MovementType;
 import java.awt.GridLayout;
 
+import org.example.model.StockMovement;
+import org.example.service.StockMovementValidator;
+import java.time.LocalDateTime;
+
 public class InventoryPanel extends JPanel {
 
     private final JTextField productIdField = new JTextField();
@@ -92,6 +96,39 @@ public class InventoryPanel extends JPanel {
 
         // TODO (Integration with Elera):
         // Connect InventoryService and display product/location names.
+    }
+
+    private StockMovement readMovementForm() {
+
+        int productId;
+        int locationId;
+        int quantity;
+
+        try {
+            productId = Integer.parseInt(productIdField.getText().trim());
+            locationId = Integer.parseInt(locationIdField.getText().trim());
+            quantity = Integer.parseInt(quantityField.getText().trim());
+
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(
+                    "Product ID, location ID and quantity must be whole numbers.");
+        }
+
+        MovementType type =
+                (MovementType) movementTypeBox.getSelectedItem();
+
+        StockMovement movement = new StockMovement(
+                productId,
+                locationId,
+                type,
+                quantity,
+                LocalDateTime.now()
+        );
+
+        StockMovementValidator validator = new StockMovementValidator();
+        validator.validate(movement);
+
+        return movement;
     }
 
     public void displayItems(List<InventoryItem> items) {

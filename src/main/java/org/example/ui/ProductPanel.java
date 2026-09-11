@@ -1,5 +1,6 @@
 package org.example.ui;
-
+import javax.swing.table.TableRowSorter;
+import java.util.regex.Pattern;
 
 import java.util.List;
 
@@ -76,8 +77,45 @@ public class ProductPanel extends JPanel {
         form.add(new JLabel("Expiry date (YYYY-MM-DD, optional):"));
         form.add(expiryField);
 
-        add(form, BorderLayout.NORTH);
+        JTextField searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search");
+        JButton showAllButton = new JButton("Show All");
 
+        JPanel searchBar = new JPanel();
+        searchBar.add(new JLabel("Search name or SKU:"));
+        searchBar.add(searchField);
+        searchBar.add(searchButton);
+        searchBar.add(showAllButton);
+
+        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
+        topPanel.add(form, BorderLayout.CENTER);
+        topPanel.add(searchBar, BorderLayout.SOUTH);
+
+        add(topPanel, BorderLayout.NORTH);
+
+        TableRowSorter<DefaultTableModel> sorter =
+                new TableRowSorter<>(tableModel);
+
+        productTable.setRowSorter(sorter);
+
+        searchButton.addActionListener(event -> {
+            String searchText = searchField.getText().trim();
+
+            if (searchText.isEmpty()) {
+                sorter.setRowFilter(null);
+            } else {
+                sorter.setRowFilter(
+                        RowFilter.regexFilter(
+                                "(?i)" + Pattern.quote(searchText), 1, 2
+                        )
+                );
+            }
+        });
+
+        showAllButton.addActionListener(event -> {
+            searchField.setText("");
+            sorter.setRowFilter(null);
+        });
         productTable.setSelectionMode(
                 ListSelectionModel.SINGLE_SELECTION
         );

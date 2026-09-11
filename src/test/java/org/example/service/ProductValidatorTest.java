@@ -152,4 +152,53 @@ public class ProductValidatorTest {
 
         assertFalse(product.isNearExpiry(today));
     }
+
+    @Test
+    void detectsStockBelowMinimum() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 10);
+
+        assertTrue(product.isLowStock(9));
+    }
+
+    @Test
+    void acceptsStockEqualToMinimum() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 10);
+
+        assertFalse(product.isLowStock(10));
+    }
+
+    @Test
+    void acceptsStockAboveMinimum() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 10);
+
+        assertFalse(product.isLowStock(11));
+    }
+
+    @Test
+    void detectsEmptyStockWhenMinimumIsPositive() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 10);
+
+        assertTrue(product.isLowStock(0));
+    }
+
+    @Test
+    void acceptsEmptyStockWhenMinimumIsZero() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 0);
+
+        assertFalse(product.isLowStock(0));
+    }
+
+    @Test
+    void rejectsNegativeTotalStock() {
+        Product product = createProduct(
+                "Water", "W001", BigDecimal.ONE, 10);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> product.isLowStock(-1));
+    }
 }

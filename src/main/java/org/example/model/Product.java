@@ -53,6 +53,16 @@ public class Product {
         return expiryDate;
     }
 
+    public boolean isLowStock(long totalQuantity) {
+
+        if (totalQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "Total stock cannot be negative.");
+        }
+
+        return totalQuantity < minimumStockLevel;
+    }
+
     public boolean isNearExpiry(LocalDate today) {
 
         if (expiryDate == null) {

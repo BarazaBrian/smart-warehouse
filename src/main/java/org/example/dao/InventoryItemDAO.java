@@ -124,4 +124,23 @@ public class InventoryItemDAO {
 
         return items;
     }
+
+    public long getTotalQuantity(int productId) throws SQLException {
+
+        String sql = """
+            SELECT COALESCE(SUM(quantity), 0) AS total_quantity
+            FROM inventory_items
+            WHERE product_id = ?
+            """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, productId);
+
+            try (ResultSet results = statement.executeQuery()) {
+                results.next();
+                return results.getLong("total_quantity");
+            }
+        }
+    }
 }

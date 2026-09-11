@@ -7,6 +7,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.JTabbedPane;
+import org.example.ui.InventoryPanel;
 
 public class Main {
 
@@ -24,7 +26,12 @@ public class Main {
         );
 
         window.add(heading, BorderLayout.NORTH);
-        window.add(new ProductPanel(), BorderLayout.CENTER);
+        JTabbedPane tabs = new JTabbedPane();
+
+        tabs.addTab("Products", new ProductPanel());
+        tabs.addTab("Inventory", new InventoryPanel());
+
+        window.add(tabs, BorderLayout.CENTER);
         window.setSize(1000, 650);
         window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         window.setLocationRelativeTo(null);

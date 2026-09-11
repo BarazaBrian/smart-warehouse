@@ -7,6 +7,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class InventoryItemDAO {
 
     private final Connection connection;
@@ -93,5 +96,32 @@ public class InventoryItemDAO {
 
             return statement.executeUpdate() > 0;
         }
+    }
+
+    public List<InventoryItem> getAllItems() throws SQLException {
+
+        List<InventoryItem> items = new ArrayList<>();
+
+        String sql = """
+            SELECT product_id, location_id, quantity
+            FROM inventory_items
+            ORDER BY product_id, location_id
+            """;
+
+        try (PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+
+            while (results.next()) {
+                InventoryItem item = new InventoryItem(
+                        results.getInt("product_id"),
+                        results.getInt("location_id"),
+                        results.getInt("quantity")
+                );
+
+                items.add(item);
+            }
+        }
+
+        return items;
     }
 }

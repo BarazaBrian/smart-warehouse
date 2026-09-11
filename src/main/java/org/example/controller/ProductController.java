@@ -21,6 +21,14 @@ public class ProductController {
     }
 
     public void refreshProducts() {
+        loadProducts(false);
+    }
+
+    public void showNearExpiryProducts() {
+        loadProducts(true);
+    }
+
+    private void loadProducts(boolean nearExpiryOnly) {
 
         if (productService == null) {
             return;
@@ -33,6 +41,12 @@ public class ProductController {
 
                     @Override
                     protected List<Product> doInBackground() throws SQLException {
+                        if (nearExpiryOnly) {
+                            return productService.getNearExpiryProducts(
+                                    java.time.LocalDate.now()
+                            );
+                        }
+
                         return productService.getAllProducts();
                     }
 

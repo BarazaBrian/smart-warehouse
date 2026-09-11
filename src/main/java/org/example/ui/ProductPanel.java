@@ -48,6 +48,7 @@ public class ProductPanel extends JPanel {
     private final JButton deleteButton = new JButton("Delete");
     private final JButton refreshButton = new JButton("Refresh");
     private final JButton clearButton = new JButton("Clear");
+    private final JButton nearExpiryButton = new JButton("Near Expiry");
 
     public ProductPanel() {
         this(null);
@@ -115,6 +116,10 @@ public class ProductPanel extends JPanel {
         showAllButton.addActionListener(event -> {
             searchField.setText("");
             sorter.setRowFilter(null);
+
+            if (productService != null && isRefreshEnabled()) {
+                controller.refreshProducts();
+            }
         });
         productTable.setSelectionMode(
                 ListSelectionModel.SINGLE_SELECTION
@@ -161,6 +166,16 @@ public class ProductPanel extends JPanel {
         buttons.add(refreshButton);
         buttons.add(clearButton);
 
+        buttons.add(nearExpiryButton);
+
+        nearExpiryButton.setEnabled(productService != null);
+
+        nearExpiryButton.addActionListener(event -> {
+            searchField.setText("");
+            sorter.setRowFilter(null);
+            controller.showNearExpiryProducts();
+        });
+
         add(buttons, BorderLayout.SOUTH);
 
         clearButton.addActionListener(event -> {
@@ -201,6 +216,7 @@ public class ProductPanel extends JPanel {
         updateButton.setEnabled(enabled);
         deleteButton.setEnabled(enabled);
         refreshButton.setEnabled(enabled);
+        nearExpiryButton.setEnabled(enabled);
     }
 
     public int getSelectedProductId() {
@@ -292,6 +308,7 @@ public class ProductPanel extends JPanel {
         addButton.setEnabled(available);
         updateButton.setEnabled(available);
         deleteButton.setEnabled(available);
+        nearExpiryButton.setEnabled(available);
     }
 
     public void displayProducts(List<Product> products) {

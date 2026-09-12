@@ -37,8 +37,11 @@ public class Main {
         window.setLocationRelativeTo(null);
 
         // TODO (Integration with Elera):
-        // Initialise the database and connect the application services.
-        // Add the product and storage-location screens with navigation.
+// Configure MySQL and initialise the schema before opening the screens.
+// Pass a ProductService with both DAOs into ProductPanel.
+// Pass StockMovementService and InventoryService into InventoryPanel.
+// Add Elera's storage-location screen as another tab.
+// Keep the product connection open while in use; close it on shutdown.
 
         window.setVisible(true);
     }

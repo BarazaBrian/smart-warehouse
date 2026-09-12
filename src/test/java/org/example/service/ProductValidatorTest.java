@@ -261,4 +261,41 @@ public class ProductValidatorTest {
 
         assertDoesNotThrow(() -> validator.validate(product));
     }
+    @Test
+    void acceptsEarliestSupportedExpiryDate() {
+        Product product = new Product(
+                "Water", "W001", BigDecimal.ONE, 5,
+                LocalDate.of(1000, 1, 1));
+
+        assertDoesNotThrow(() -> validator.validate(product));
+    }
+
+    @Test
+    void acceptsLatestSupportedExpiryDate() {
+        Product product = new Product(
+                "Water", "W001", BigDecimal.ONE, 5,
+                LocalDate.of(9999, 12, 31));
+
+        assertDoesNotThrow(() -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsExpiryDateBeforeSupportedRange() {
+        Product product = new Product(
+                "Water", "W001", BigDecimal.ONE, 5,
+                LocalDate.of(999, 12, 31));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
+
+    @Test
+    void rejectsExpiryDateAfterSupportedRange() {
+        Product product = new Product(
+                "Water", "W001", BigDecimal.ONE, 5,
+                LocalDate.of(10000, 1, 1));
+
+        assertThrows(IllegalArgumentException.class,
+                () -> validator.validate(product));
+    }
 }

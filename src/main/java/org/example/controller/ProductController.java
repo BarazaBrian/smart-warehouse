@@ -34,7 +34,7 @@ public class ProductController {
 
     private void loadProducts(String filter) {
 
-        if (productService == null) {
+        if (productService == null || !panel.isRefreshEnabled()) {
             return;
         }
 

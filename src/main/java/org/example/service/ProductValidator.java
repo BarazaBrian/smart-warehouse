@@ -55,5 +55,14 @@ public class ProductValidator {
             throw new IllegalArgumentException(
                     "Unit price must not require more than two decimal places.");
         }
+
+        if (product.getExpiryDate() != null) {
+            int year = product.getExpiryDate().getYear();
+
+            if (year < 1000 || year > 9999) {
+                throw new IllegalArgumentException(
+                        "Expiry year must be between 1000 and 9999.");
+            }
+        }
     }
 }

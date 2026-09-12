@@ -21,14 +21,18 @@ public class ProductController {
     }
 
     public void refreshProducts() {
-        loadProducts(false);
+        loadProducts("all");
     }
 
     public void showNearExpiryProducts() {
-        loadProducts(true);
+        loadProducts("expiry");
     }
 
-    private void loadProducts(boolean nearExpiryOnly) {
+    public void showLowStockProducts() {
+        loadProducts("low");
+    }
+
+    private void loadProducts(String filter) {
 
         if (productService == null) {
             return;
@@ -41,10 +45,14 @@ public class ProductController {
 
                     @Override
                     protected List<Product> doInBackground() throws SQLException {
-                        if (nearExpiryOnly) {
+                        if (filter.equals("expiry")) {
                             return productService.getNearExpiryProducts(
                                     java.time.LocalDate.now()
                             );
+                        }
+
+                        if (filter.equals("low")) {
+                            return productService.getLowStockProducts();
                         }
 
                         return productService.getAllProducts();

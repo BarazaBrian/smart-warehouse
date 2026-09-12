@@ -1,4 +1,5 @@
 package org.example.service;
+import org.example.dao.InventoryItemDAO;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -12,10 +13,20 @@ import java.util.List;
 public class ProductService {
 
     private final ProductDAO productDAO;
+    private final InventoryItemDAO inventoryDAO;
     private final ProductValidator validator;
 
     public ProductService(ProductDAO productDAO) {
+        this(productDAO, null);
+    }
+
+    // TODO (Integration with Elera):
+// Supply both DAOs to enable low-stock queries.
+// Both should use the same open connection for this service.
+    public ProductService(ProductDAO productDAO,
+                          InventoryItemDAO inventoryDAO) {
         this.productDAO = productDAO;
+        this.inventoryDAO = inventoryDAO;
         this.validator = new ProductValidator();
     }
 
@@ -53,6 +64,28 @@ public class ProductService {
         }
 
         return nearExpiryProducts;
+    }
+
+    public List<Product> getLowStockProducts() throws SQLException {
+
+        if (inventoryDAO == null) {
+            throw new SQLException(
+                    "Inventory access has not been configured.");
+        }
+
+        List<Product> lowStockProducts = new ArrayList<>();
+
+        for (Product product : productDAO.getAllProducts()) {
+
+            long totalQuantity =
+                    inventoryDAO.getTotalQuantity(product.getId());
+
+            if (product.isLowStock(totalQuantity)) {
+                lowStockProducts.add(product);
+            }
+        }
+
+        return lowStockProducts;
     }
 
     private void validateId(int id) {

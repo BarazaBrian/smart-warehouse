@@ -1,5 +1,6 @@
 package org.example.ui;
 
+import org.example.service.InventoryValidator;
 import org.example.service.InventoryService;
 import org.example.service.StockMovementService;
 import java.sql.SQLException;
@@ -105,8 +106,8 @@ public class InventoryPanel extends JPanel {
             productIdField.requestFocusInWindow();
         });
 
-// TODO (Brian): Connect these buttons to inventory and movement services.
-        assignButton.setEnabled(false);
+// TODO (Integration with Elera): Connect assignment only after
+// checking that the product exists and the location is a shelf.        assignButton.setEnabled(false);
         recordButton.setEnabled(stockMovementService != null);
         recordButton.addActionListener(
                 event -> recordMovement(recordButton, refreshButton)
@@ -339,6 +340,29 @@ public class InventoryPanel extends JPanel {
 
         worker.execute();
     }
+
+    private InventoryItem readAssignmentForm() {
+
+        int productId;
+        int locationId;
+
+        try {
+            productId = Integer.parseInt(productIdField.getText().trim());
+            locationId = Integer.parseInt(locationIdField.getText().trim());
+
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(
+                    "Product ID and location ID must be whole numbers.");
+        }
+
+        InventoryItem item = new InventoryItem(productId, locationId, 0);
+
+        InventoryValidator validator = new InventoryValidator();
+        validator.validate(item);
+
+        return item;
+    }
+
 
     private StockMovement readMovementForm() {
 

@@ -49,6 +49,7 @@ public class ProductPanel extends JPanel {
     private final JButton refreshButton = new JButton("Refresh");
     private final JButton clearButton = new JButton("Clear");
     private final JButton nearExpiryButton = new JButton("Near Expiry");
+    private final JButton lowStockButton = new JButton("Low Stock");
 
     public ProductPanel() {
         this(null);
@@ -167,6 +168,15 @@ public class ProductPanel extends JPanel {
         buttons.add(clearButton);
 
         buttons.add(nearExpiryButton);
+        buttons.add(lowStockButton);
+
+        lowStockButton.setEnabled(productService != null);
+
+        lowStockButton.addActionListener(event -> {
+            searchField.setText("");
+            sorter.setRowFilter(null);
+            controller.showLowStockProducts();
+        });
 
         nearExpiryButton.setEnabled(productService != null);
 
@@ -217,6 +227,7 @@ public class ProductPanel extends JPanel {
         deleteButton.setEnabled(enabled);
         refreshButton.setEnabled(enabled);
         nearExpiryButton.setEnabled(enabled);
+        lowStockButton.setEnabled(enabled);
     }
 
     public int getSelectedProductId() {
@@ -309,6 +320,7 @@ public class ProductPanel extends JPanel {
         updateButton.setEnabled(available);
         deleteButton.setEnabled(available);
         nearExpiryButton.setEnabled(available);
+        lowStockButton.setEnabled(available);
     }
 
     public void displayProducts(List<Product> products) {

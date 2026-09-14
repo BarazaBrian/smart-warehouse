@@ -1,17 +1,48 @@
 package org.example;
 
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-public class Main {
-    static void main() {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        IO.println(String.format("Hello and welcome!"));
+import org.example.ui.ProductPanel;
+import java.awt.BorderLayout;
 
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            IO.println("i = " + i);
-        }
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.JTabbedPane;
+import org.example.ui.InventoryPanel;
+
+public class Main {
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> createWindow());
+    }
+
+    private static void createWindow() {
+
+        JFrame window = new JFrame("Smart Warehouse");
+
+        JLabel heading = new JLabel(
+                "Smart Warehouse — Inventory Manager",
+                SwingConstants.CENTER
+        );
+
+        window.add(heading, BorderLayout.NORTH);
+        JTabbedPane tabs = new JTabbedPane();
+
+        tabs.addTab("Products", new ProductPanel());
+        tabs.addTab("Inventory", new InventoryPanel());
+
+        window.add(tabs, BorderLayout.CENTER);
+        window.setSize(1000, 650);
+        window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        window.setLocationRelativeTo(null);
+
+        // TODO (Integration with Elera):
+// Configure MySQL and initialise the schema before opening the screens.
+// Pass a ProductService with both DAOs into ProductPanel.
+// Pass StockMovementService and InventoryService into InventoryPanel.
+// Add Elera's storage-location screen as another tab.
+// Keep the product connection open while in use; close it on shutdown.
+
+        window.setVisible(true);
     }
 }

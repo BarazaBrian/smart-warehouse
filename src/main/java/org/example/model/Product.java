@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public class Product {
 
+    private int id;
     private String name;
     private String sku;
     private BigDecimal unitPrice;
@@ -18,6 +19,18 @@ public class Product {
         this.unitPrice = unitPrice;
         this.minimumStockLevel = minimumStockLevel;
         this.expiryDate = expiryDate;
+    }
+
+    public Product(int id, String name, String sku,
+                   BigDecimal unitPrice, int minimumStockLevel,
+                   LocalDate expiryDate) {
+
+        this(name, sku, unitPrice, minimumStockLevel, expiryDate);
+        this.id = id;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public String getName() {
@@ -38,5 +51,25 @@ public class Product {
 
     public LocalDate getExpiryDate() {
         return expiryDate;
+    }
+
+    public boolean isLowStock(long totalQuantity) {
+
+        if (totalQuantity < 0) {
+            throw new IllegalArgumentException(
+                    "Total stock cannot be negative.");
+        }
+
+        return totalQuantity < minimumStockLevel;
+    }
+
+    public boolean isNearExpiry(LocalDate today) {
+
+        if (expiryDate == null) {
+            return false;
+        }
+
+        return !expiryDate.isBefore(today)
+                && !expiryDate.isAfter(today.plusDays(30));
     }
 }

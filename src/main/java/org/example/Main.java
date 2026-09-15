@@ -30,7 +30,7 @@ import javax.swing.JTabbedPane;
 public class Main {
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> createWindow());
+        SwingUtilities.invokeLater(Main::createWindow);
     }
 
     private static void createWindow() {

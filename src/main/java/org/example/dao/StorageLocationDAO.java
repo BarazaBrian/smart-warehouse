@@ -26,12 +26,15 @@ import java.util.Map;
  */
 public class StorageLocationDAO {
 
+    /**
+     * A brand-new location can never already be part of the tree, so
+     * there's nothing to check for a cycle here, unlike update(),
+     * where the location already exists and could theoretically be
+     * re-parented into its own descendant.
+     */
     public int insert(String name, LocationType type, Integer parentId) throws SQLException {
 
         validateParentType(type, parentId);
-        if (parentId != null && wouldCreateCycle(parentId, null)) {
-            throw new IllegalArgumentException("Parent assignment would create a cycle");
-        }
 
         String sql = "INSERT INTO storage_location (name, type, parent_id) VALUES (?, ?, ?)";
 
@@ -143,27 +146,9 @@ public class StorageLocationDAO {
         return results;
     }
 
-    public List<StorageLocation> findRoots() throws SQLException {
-
-        String sql = "SELECT location_id, name, type, parent_id FROM storage_location WHERE parent_id IS NULL";
-        List<StorageLocation> results = new ArrayList<>();
-
-        try (Connection conn = DBConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql)) {
-
-            while (rs.next()) {
-                results.add(mapRow(rs));
-            }
-        }
-
-        return results;
-    }
-
     /**
      * Returns every location, not just one level, for showing in a
-     * table on screen. findChildren()/findRoots() are for walking the
-     * tree one level at a time, this is a flat list for display.
+     * table on screen.
      */
     public List<StorageLocation> findAll() throws SQLException {
 

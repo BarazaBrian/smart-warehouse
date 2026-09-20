@@ -34,7 +34,6 @@ public class HierarchyRules {
             if (parentType != LocationType.ZONE) {
                 throw new IllegalArgumentException("A SHELF's parent must be a ZONE");
             }
-            return;
         }
     }
 
@@ -63,7 +62,7 @@ public class HierarchyRules {
      * create a loop.
      */
     public static boolean wouldCreateCycle(Integer proposedParentId, Integer selfId,
-                                            Map<Integer, Integer> parentIdByLocationId) {
+                                           Map<Integer, Integer> parentIdByLocationId) {
 
         if (selfId == null || proposedParentId == null) {
             return false;

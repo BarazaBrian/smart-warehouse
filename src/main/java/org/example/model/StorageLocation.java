@@ -16,10 +16,10 @@ import java.util.List;
  */
 public class StorageLocation {
 
-    private int id;
-    private String name;
-    private LocationType type;
-    private Integer parentId; // null for a WAREHOUSE
+    private final int id;
+    private final String name;
+    private final LocationType type;
+    private final Integer parentId; // null for a WAREHOUSE
     private final List<StorageLocation> children = new ArrayList<>();
 
     // Direct stock value at this location only, set by the service

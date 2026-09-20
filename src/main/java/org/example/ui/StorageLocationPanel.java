@@ -17,7 +17,7 @@ import java.util.List;
  * Screen for creating and viewing the storage-location hierarchy
  * (warehouses, zones, shelves), and for running the recursive total
  * stock value calculation on a selected location.
- *
+ * <p>
  * Follows the same layout pattern as Brian's ProductPanel: a form at
  * the top for entering a new row, a table in the middle showing all
  * existing rows, and a row of buttons at the bottom that act on
@@ -49,11 +49,6 @@ public class StorageLocationPanel extends JPanel {
     };
 
     private final JTable locationTable = new JTable(tableModel);
-    private final JButton addButton = new JButton("Add");
-    private final JButton deleteButton = new JButton("Delete");
-    private final JButton refreshButton = new JButton("Refresh");
-    private final JButton clearButton = new JButton("Clear");
-    private final JButton totalValueButton = new JButton("Calculate Total Value");
 
     public StorageLocationPanel() {
 
@@ -83,6 +78,12 @@ public class StorageLocationPanel extends JPanel {
         locationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         locationTable.setFillsViewportHeight(true);
         add(new JScrollPane(locationTable), BorderLayout.CENTER);
+
+        JButton addButton = new JButton("Add");
+        JButton deleteButton = new JButton("Delete");
+        JButton refreshButton = new JButton("Refresh");
+        JButton clearButton = new JButton("Clear");
+        JButton totalValueButton = new JButton("Calculate Total Value");
 
         JPanel buttons = new JPanel();
         buttons.add(addButton);

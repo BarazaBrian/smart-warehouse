@@ -70,16 +70,19 @@ public class StockMovementService {
 
             if (item == null) {
 
+                // A movement that isn't IN can't be the first-ever
+                // record for this pair, there's nothing to take OUT of
+                // a location that's never held this product.
                 if (movement.getMovementType() == MovementType.OUT) {
                     throw new IllegalArgumentException(
                             "No stock exists for this product at this location.");
                 }
 
                 // First-ever IN movement for this product/location pair.
-                // Verify the location is a SHELF before creating the
-                // inventory record, this is the same rule InventoryService
-                // uses for a manual assignment, just triggered here
-                // automatically instead of through a separate button.
+                // Look up the location and check its type before
+                // creating anything, this is the same shelf-only rule
+                // InventoryService used to enforce for a manual
+                // assignment, applied here automatically instead.
                 StorageLocation location =
                         new StorageLocationDAO().findById(movement.getLocationId());
 
@@ -94,15 +97,20 @@ public class StockMovementService {
                                     + location.getType() + ".");
                 }
 
-                // Uses the SAME connection/inventoryDAO as the rest of
-                // this method, so this insert is part of the same
-                // transaction as the quantity update and movement below,
-                // if anything fails after this, it rolls back too.
+                // inventoryDAO here is the SAME object used for the
+                // quantity update and movement insert below, all three
+                // built from the one connection this method opened.
+                // That's what makes this insert part of the same
+                // transaction, if anything later in this method fails,
+                // this insert gets rolled back with it, not left behind.
                 inventoryDAO.assignProductToLocation(
                         movement.getProductId(),
                         movement.getLocationId()
                 );
 
+                // Re-fetch the row we just created, so "item" below
+                // has a real quantity (0) to calculate the new
+                // quantity from, instead of staying null.
                 item = inventoryDAO.findItem(
                         movement.getProductId(),
                         movement.getLocationId()

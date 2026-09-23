@@ -43,3 +43,6 @@ build/
 .env
 db-local.properties
 db.properties
+dist/
+dist-test/
+dependency-reduced-pom.xml

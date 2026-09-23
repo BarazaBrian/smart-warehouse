@@ -5,7 +5,7 @@ products, and stock movements, with a MySQL database behind it.
 
 ## Requirements
 
-- Java 25 or higher (the project targets Java 26)
+- Java 26 or higher
 - Maven
 - MySQL Server, running locally
 
@@ -34,7 +34,7 @@ products, and stock movements, with a MySQL database behind it.
 mvn compile
 mvn test
 ```
-Expect 13 passing tests (recursion and validation logic, no database required).
+Expect 76 passing tests across five test classes, covering recursion, hierarchy rules, product validation, inventory validation, stock movement validation and stock calculations. No database is required for the unit tests.
 
 Then run `Main.java` from your IDE, or:
 ```
@@ -49,9 +49,12 @@ mvn exec:java -Dexec.mainClass="org.example.Main"
    & "C:\Program Files\Java\jdk-26.0.1\bin\jpackage.exe" --input target --name SmartWarehouse --main-jar smart-warehouse-1.0-SNAPSHOT.jar --main-class org.example.Main --type app-image --dest dist
    ```
    (Adjust the JDK path if building on a different machine.)
-3. This produces `dist\SmartWarehouse\SmartWarehouse.exe`, with a bundled Java runtime.
-4. Copy the `dist\SmartWarehouse` folder to any location and double-click `SmartWarehouse.exe`, no separate Java installation required.
-5. Verified on: Windows 11 Pro, version 25H2 (OS build 26200.9445), 15 September 2026.
+3. This produces `dist\SmartWarehouse\SmartWarehouse.exe` with a bundled Java runtime.
+4. Copy `db.properties` into the `dist\SmartWarehouse` folder beside `SmartWarehouse.exe`. Do not commit this file because it contains local database credentials.
+5. Ensure MySQL is running and that the `warehouse_db` database exists.
+6. Copy the complete `dist\SmartWarehouse` folder to the target Windows computer and double-click `SmartWarehouse.exe`. No separate Java installation is required.
+7. Verified on: Windows 11 Pro, version 25H2 (OS build 26200.9445), 15 September 2026.
+
 
 ## Project structure
 
@@ -75,8 +78,9 @@ mvn exec:java -Dexec.mainClass="org.example.Main"
 `StorageLocationService.calculateTotalStockValue()` recursively sums stock value
 across a storage location and all of its descendants. Base case: a location with
 no children returns just its own value. Depth is bounded to three levels
-(warehouse/zone/shelf), enforced by `HierarchyRules` at insert time, along with
-cycle prevention.
+(warehouse/zone/shelf), enforced by `HierarchyRules` when locations are inserted or updated, together
+with cycle prevention.
+
 
 ## Team
 

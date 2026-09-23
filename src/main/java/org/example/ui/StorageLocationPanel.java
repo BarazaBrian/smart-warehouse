@@ -77,9 +77,39 @@ public class StorageLocationPanel extends JPanel {
         // location at once.
         locationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         locationTable.setFillsViewportHeight(true);
+        locationTable.getSelectionModel().addListSelectionListener(event -> {
+
+            if (event.getValueIsAdjusting()) {
+                return;
+            }
+
+            int selectedRow = locationTable.getSelectedRow();
+
+            if (selectedRow == -1) {
+                return;
+            }
+
+            int modelRow = locationTable.convertRowIndexToModel(selectedRow);
+
+            nameField.setText(
+                    tableModel.getValueAt(modelRow, 1).toString()
+            );
+
+            typeBox.setSelectedItem(
+                    tableModel.getValueAt(modelRow, 2)
+            );
+
+            Object parentId = tableModel.getValueAt(modelRow, 3);
+
+            parentIdField.setText(
+                    parentId == null ? "" : parentId.toString()
+            );
+        });
+
         add(new JScrollPane(locationTable), BorderLayout.CENTER);
 
         JButton addButton = new JButton("Add");
+        JButton updateButton = new JButton("Update");
         JButton deleteButton = new JButton("Delete");
         JButton refreshButton = new JButton("Refresh");
         JButton clearButton = new JButton("Clear");
@@ -87,6 +117,7 @@ public class StorageLocationPanel extends JPanel {
 
         JPanel buttons = new JPanel();
         buttons.add(addButton);
+        buttons.add(updateButton);
         buttons.add(deleteButton);
         buttons.add(refreshButton);
         buttons.add(clearButton);
@@ -98,6 +129,7 @@ public class StorageLocationPanel extends JPanel {
         // is a lambda, a short way of writing "do this when triggered"
         // without a whole separate named class for each button.
         addButton.addActionListener(event -> addLocation());
+        updateButton.addActionListener(event -> updateSelectedLocation());
         deleteButton.addActionListener(event -> deleteSelectedLocation());
         refreshButton.addActionListener(event -> loadLocations());
         clearButton.addActionListener(event -> clearForm());
@@ -154,11 +186,69 @@ public class StorageLocationPanel extends JPanel {
     }
 
     /**
-     * Deletes whichever row is currently selected in the table. The
-     * DAO itself refuses to delete a location that still has children,
-     * that check happens there, not here, this method just displays
-     * whatever the DAO decides.
+     * Updates the selected location using the values currently
+     * entered in the form.
      */
+    private void updateSelectedLocation() {
+
+        int selectedRow = locationTable.getSelectedRow();
+
+        if (selectedRow == -1) {
+            showError("Select a location from the table first.");
+            return;
+        }
+
+        int modelRow =
+                locationTable.convertRowIndexToModel(selectedRow);
+
+        int id = ((Number) tableModel.getValueAt(modelRow, 0))
+                .intValue();
+
+        String name = nameField.getText().trim();
+        LocationType type =
+                (LocationType) typeBox.getSelectedItem();
+
+        if (name.isEmpty()) {
+            showError("Enter a name.");
+            return;
+        }
+
+        String parentText = parentIdField.getText().trim();
+        Integer parentId;
+
+        if (parentText.isEmpty()) {
+            parentId = null;
+        } else {
+            try {
+                parentId = Integer.parseInt(parentText);
+            } catch (NumberFormatException exception) {
+                showError(
+                        "Parent ID must be a whole number, "
+                                + "or left blank for a WAREHOUSE."
+                );
+                return;
+            }
+        }
+
+        try {
+            dao.update(id, name, type, parentId);
+
+            clearForm();
+            loadLocations();
+
+            JOptionPane.showMessageDialog(
+                    this,
+                    "Storage location updated successfully."
+            );
+
+        } catch (IllegalArgumentException exception) {
+            showError(exception.getMessage());
+        } catch (SQLException exception) {
+            showError("Database error: " + exception.getMessage());
+        }
+    }
+
+
     private void deleteSelectedLocation() {
 
         int selectedRow = locationTable.getSelectedRow();

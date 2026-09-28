@@ -3,6 +3,12 @@
 A Java desktop application for managing a warehouse's storage-location hierarchy,
 products, and stock movements, with a MySQL database behind it.
 
+## Download packaged application
+
+The packaged Windows application is available here:
+
+[Download Smart Warehouse v1.0.0](https://github.com/BarazaBrian/smart-warehouse/releases/tag/v1.0.0)
+
 ## Requirements
 
 - Java 26 or higher
